@@ -1,0 +1,118 @@
+Metadata-Version: 2.4
+Name: pyflow
+Version: 0.1.0
+Summary: Biblioteka do definiowania i planowania przepływów zadań
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0; extra == "dev"
+
+
+# PyFlow
+
+PyFlow to biblioteka w Pythonie służąca do definiowania zadań, zarządzania zależnościami i planowania kolejności ich wykonania.
+
+## Wymagania
+
+- Python 3.11 lub nowszy
+- Git
+- pytest
+
+## Instalacja
+
+Sklonuj repozytorium, przejdź do katalogu projektu i zainstaluj pakiet w środowisku wirtualnym:
+
+```bash
+python -m venv .venv
+```
+
+Windows PowerShell:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+python -m pip install -e ".[dev]"
+```
+
+## Przykład użycia
+
+```python
+from pyflow import (
+    Task,
+    Workflow,
+    topological_order,
+    execution_layers,
+)
+
+
+def extract(inputs, params):
+    return [1, 2, 3]
+
+
+def clean(inputs, params):
+    return [x for x in inputs["extract"] if x > params["minimum"]]
+
+
+def report(inputs, params):
+    return sum(inputs["clean"])
+
+
+workflow = Workflow()
+
+workflow.add_task(Task("extract", extract))
+
+workflow.add_task(
+    Task(
+        "clean",
+        clean,
+        dependencies=frozenset({"extract"}),
+        params={"minimum": 1},
+    )
+)
+
+workflow.add_task(
+    Task(
+        "report",
+        report,
+        dependencies=frozenset({"clean"}),
+    )
+)
+
+workflow.validate()
+
+print(topological_order(workflow))
+print(execution_layers(workflow))
+```
+
+Oczekiwany plan wykonania:
+
+```text
+['extract', 'clean', 'report']
+[['extract'], ['clean'], ['report']]
+```
+
+Powyższy przykład demonstruje definiowanie i planowanie zadań. Wykonywanie funkcji z przekazywaniem wyników zostanie zaimplementowane w kolejnych etapach projektu.
+
+## Testy
+
+Uruchom wszystkie testy:
+
+```bash
+python -m pytest -v
+```
+
+## Funkcjonalności
+
+- Model zadania `Task`
+- Model przepływu `Workflow`
+- Walidacja zależności i cykli w grafie DAG
+- Deterministyczne sortowanie topologiczne
+- Warstwy wykonania zadań
+- Testy automatyczne z wykorzystaniem pytest
+
+## Zastosowany algorytm
+
+Sortowanie topologiczne wykorzystuje algorytm Kahna. Zadania, których zależności zostały spełnione, są wybierane w kolejności alfabetycznej przy użyciu kopca.
+
+Złożoność czasowa wariantu sortowania z kopcem wynosi O((V + E) log V), gdzie V oznacza liczbę zadań, a E liczbę zależności. Wykrycie cyklu następuje, gdy nie wszystkie zadania zostaną umieszczone w wyniku sortowania.
+
+Warstwy wykonania grupują zadania, których wszystkie zależności zostały spełnione przed rozpoczęciem danej warstwy.
