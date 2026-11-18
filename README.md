@@ -1,16 +1,16 @@
-# PyFlow
+﻿# PyFlow
 
-PyFlow is a Python library for defining, validating, planning and executing data workflows.
+PyFlow to biblioteka napisana w języku Python, służąca do definiowania, walidowania, planowania i wykonywania przepływów danych (workflow).
 
-The project allows users to create tasks, define dependencies between them, validate a directed acyclic graph (DAG), plan execution order and execute the entire workflow synchronously.
+Projekt umożliwia tworzenie zadań, określanie zależności między nimi, sprawdzanie poprawności grafu skierowanego acyklicznego (DAG), planowanie kolejności wykonywania oraz synchroniczne uruchamianie całego przepływu.
 
-## Requirements
+## Wymagania
 
-- Python 3.11 or newer
+- Python 3.11 lub nowszy
 - Git
 - pytest
 
-## Project structure
+## Struktura projektu
 
 ```text
 pyflow/
@@ -36,91 +36,89 @@ pyflow/
 |-- README.md
 ```
 
-## Installation
+## Instalacja
 
-Clone the repository and enter the project directory.
+Sklonuj repozytorium i przejdź do katalogu projektu.
 
-Create a virtual environment:
+Utwórz środowisko wirtualne:
 
 ```bash
 python -m venv .venv
 ```
 
-Activate it on Windows PowerShell:
+Aktywuj środowisko w systemie Windows (PowerShell):
 
 ```powershell
 .\.venv\Scripts\Activate.ps1
 ```
 
-Install the package:
+Zainstaluj pakiet:
 
 ```bash
 python -m pip install -e ".[dev]"
 ```
 
-## Features
+## Funkcjonalności
 
-- Task model based on dataclasses
-- Workflow model for managing tasks
-- Task dependency management
-- DAG validation
-- Detection of missing dependencies and cycles
-- Deterministic topological sorting
-- Execution layers
-- Synchronous workflow execution
-- Result passing between dependent tasks
-- Task execution status tracking
-- Error handling and dependency skipping
-- Execution time measurement
-- Text execution report
-- Automated unit and integration tests
+- Model zadania oparty na dataclasses.
+- Model przepływu Workflow do zarządzania zadaniami.
+- Definiowanie zależności między zadaniami.
+- Walidacja grafu DAG.
+- Wykrywanie brakujących zależności i cykli.
+- Deterministyczne sortowanie topologiczne.
+- Wyznaczanie warstw wykonania.
+- Synchroniczny silnik wykonawczy.
+- Przekazywanie wyników pomiędzy zależnymi zadaniami.
+- Monitorowanie statusów wykonywanych zadań.
+- Obsługa błędów i pomijanie zadań zależnych.
+- Pomiar czasu wykonania.
+- Generowanie raportu z przebiegu workflow.
+- Automatyczne testy jednostkowe i integracyjne.
 
-## Task and Workflow models
+## Modele Task i Workflow
 
-Each task contains:
+Każde zadanie (Task) zawiera następujące elementy:
 
-- name - unique task identifier
-- function - function executed by the engine
-- dependencies - set of direct dependencies
-- params - task configuration parameters
-- description - optional task description
+- name - unikalna nazwa zadania.
+- function - funkcja wykonywana przez silnik.
+- dependencies - zbiór bezpośrednich zależności.
+- params - parametry konfiguracyjne zadania.
+- description - opcjonalny opis zadania.
 
-Task functions use the following interface:
+Funkcje zadań korzystają z następującego interfejsu:
 
 ```python
 def task_function(inputs, params):
     return result
 ```
 
-The inputs argument contains results from direct dependencies.
+Argument inputs zawiera wyniki bezpośrednich zależności, natomiast params przechowuje parametry konfiguracyjne zadania.
 
-The params argument contains task configuration.
+Klasa Workflow przechowuje zadania i odpowiada za walidację definicji przepływu.
 
-The Workflow class stores tasks and validates the workflow definition.
+## Planowanie grafu
 
-## Graph planning
+Projekt wykorzystuje algorytm sortowania topologicznego Kahna.
 
-PyFlow uses topological sorting based on Kahn's algorithm.
+Algorytm wyznacza poprawną kolejność wykonywania zadań, zapewniając, że każde zadanie zostanie uruchomione dopiero po wykonaniu wszystkich swoich zależności.
 
-The algorithm determines a valid execution order while ensuring that every task is executed after its dependencies.
+W przypadku kilku dostępnych zadań stosowana jest kolejność alfabetyczna, co zapewnia deterministyczność wyników.
 
-When multiple tasks are available, alphabetical ordering ensures deterministic results.
-
-The time complexity of the heap-based implementation is:
+Złożoność czasowa zastosowanego wariantu z kopcem wynosi:
 
 O((V + E) log V)
 
-Where:
-- V is the number of tasks
-- E is the number of dependencies
+Gdzie:
+- V oznacza liczbę zadań.
+- E oznacza liczbę zależności.
 
-Execution layers group tasks whose dependencies have already been satisfied.
+Warstwy wykonania grupują zadania, których zależności zostały już spełnione.
 
-## Synchronous execution engine
+## Synchroniczny silnik wykonawczy
 
-The execution engine is implemented in execution.py.
+Silnik wykonawczy znajduje się w pliku execution.py.
 
-The main public function is:
+Główną funkcją odpowiedzialną za uruchamianie przepływu jest:
 
 ```python
 from pyflow import run
@@ -128,98 +126,100 @@ from pyflow import run
 result = run(workflow)
 ```
 
-The RunResult object contains:
+Obiekt RunResult przechowuje:
 
-- outputs - mapping of task names to their results
-- task_states - execution state of every task
-- succeeded - indicates whether the entire workflow succeeded
-- duration - total workflow execution time
+- outputs - mapowanie nazw zadań na uzyskane wyniki.
+- task_states - status i informacje o wykonaniu każdego zadania.
+- succeeded - informację, czy cały przepływ zakończył się powodzeniem.
+- duration - całkowity czas wykonania workflow.
 
-## Task statuses
+## Statusy zadań
 
-Every task has one of the following statuses:
+Każde zadanie może posiadać jeden z następujących statusów:
 
-| Status | Description |
-|--------|-------------|
-| PENDING | Task is waiting for execution |
-| RUNNING | Task is currently executing |
-| SUCCEEDED | Task completed successfully |
-| FAILED | Task execution failed |
-| SKIPPED | Task was skipped because a dependency failed |
+| Status | Opis |
+|--------|------|
+| PENDING | Zadanie oczekuje na wykonanie. |
+| RUNNING | Zadanie jest aktualnie wykonywane. |
+| SUCCEEDED | Zadanie zakończyło się powodzeniem. |
+| FAILED | Wykonanie zadania zakończyło się błędem. |
+| SKIPPED | Zadanie zostało pominięte z powodu błędu zależności. |
 
-## Error handling policy
+## Polityka obsługi błędów
 
-PyFlow uses a policy that allows independent tasks to continue after an execution failure.
+PyFlow wykorzystuje politykę, która pozwala na kontynuowanie wykonywania niezależnych zadań pomimo wystąpienia błędu.
 
-When a task fails:
+W przypadku niepowodzenia zadania:
 
-1. The task receives the FAILED status.
-2. Dependent tasks receive the SKIPPED status.
-3. Independent tasks continue executing.
-4. The engine raises TaskExecutionError after processing the workflow.
+1. Zadanie otrzymuje status FAILED.
+2. Zadania zależne otrzymują status SKIPPED.
+3. Zadania niezależne są nadal wykonywane.
+4. Po przetworzeniu przepływu silnik zgłasza wyjątek TaskExecutionError.
 
-TaskExecutionError contains the failed task name, the original exception and the execution report.
+TaskExecutionError zawiera nazwę zadania, w którym wystąpił błąd, oryginalny wyjątek oraz raport wykonania.
 
-The original exception is preserved using exception chaining.
+Oryginalny wyjątek jest zachowywany poprzez mechanizm łańcuchowania wyjątków.
 
-## Execution time report
+## Raport czasu wykonania
 
-The engine measures execution time using time.perf_counter().
+Silnik mierzy czas wykonania przy użyciu funkcji time.perf_counter().
 
-The report contains:
-- Name of each task
-- Task execution status
-- Individual execution time
-- Total workflow execution time
-- Overall execution result
+Raport zawiera:
 
-## Example workflow
+- Nazwę każdego zadania.
+- Status wykonania zadania.
+- Indywidualny czas wykonania.
+- Całkowity czas wykonania workflow.
+- Informację o powodzeniu lub niepowodzeniu całego przepływu.
 
-The project includes an end-to-end example:
+## Przykładowy workflow
 
-CSV -> Data cleaning -> Aggregation -> JSON
+Projekt zawiera kompletny przykład przepływu danych:
 
-The example reads a local CSV file, validates records, calculates statistics and generates a JSON report.
+CSV -> Czyszczenie danych -> Agregacja -> JSON
 
-Run the example:
+Przykład odczytuje lokalny plik CSV, weryfikuje rekordy, oblicza statystyki i generuje raport w formacie JSON.
+
+Uruchomienie przykładu:
 
 ```bash
 python examples/run_example.py
 ```
 
-The generated report is saved in:
+Wygenerowany raport zostanie zapisany w pliku:
 
 ```text
 examples/report.json
 ```
 
-## Running tests
+## Uruchamianie testów
 
-Run all automated tests:
+Aby uruchomić wszystkie testy automatyczne, wykonaj polecenie:
 
 ```bash
 python -m pytest -v
 ```
 
-The tests cover:
-- Empty workflows
-- Single tasks
-- Task dependencies
-- Duplicate tasks
-- Missing dependencies
-- Cycles
-- Deterministic execution order
-- Execution layers
-- Result passing
-- Task parameters
-- Execution failures
-- Skipped dependent tasks
-- Independent task execution
-- Execution time measurement
+Testy obejmują:
 
-## Public API
+- Puste przepływy.
+- Pojedyncze zadania.
+- Zależności pomiędzy zadaniami.
+- Duplikaty zadań.
+- Brakujące zależności.
+- Wykrywanie cykli.
+- Deterministyczność kolejności wykonania.
+- Warstwy wykonania.
+- Przekazywanie wyników.
+- Parametry zadań.
+- Obsługę błędów wykonania.
+- Pomijanie zadań zależnych.
+- Kontynuowanie wykonywania zadań niezależnych.
+- Pomiar czasu wykonania.
 
-The main public API is available directly from the pyflow package:
+## Publiczne API
+
+Główne elementy biblioteki są dostępne bezpośrednio z pakietu pyflow:
 
 ```python
 from pyflow import (
@@ -236,13 +236,14 @@ from pyflow import (
 )
 ```
 
-## Development
+## Rozwój projektu
 
-The project is developed using Python 3.11+.
+Projekt został opracowany z wykorzystaniem języka Python w wersji 3.11 lub nowszej.
 
-The implementation separates:
-- Models - task and workflow definitions
-- Graph - DAG validation and execution planning
-- Execution - synchronous workflow execution and reporting
+Implementacja została podzielona na trzy główne obszary:
 
-All changes are covered by automated tests.
+- Models - definicje zadań i przepływów.
+- Graph - walidacja grafu DAG i planowanie kolejności wykonania.
+- Execution - synchroniczne wykonywanie przepływów, obsługa błędów i raportowanie.
+
+Wszystkie najważniejsze funkcjonalności zostały objęte testami automatycznymi.
